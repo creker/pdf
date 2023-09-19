@@ -499,6 +499,7 @@ const (
 	Dict
 	Array
 	Stream
+	Objptr
 )
 
 // Kind reports the kind of value underlying v.
@@ -522,6 +523,8 @@ func (v Value) Kind() ValueKind {
 		return Array
 	case stream:
 		return Stream
+	case objptr:
+		return Objptr
 	}
 }
 
@@ -682,6 +685,16 @@ func (v Value) Name() string {
 	return string(x)
 }
 
+// Objptr returns v's objptr
+// If v.Kind() != Objptr, Objptr returns null objptr
+func (v Value) Objptr() objptr {
+	x, ok := v.data.(objptr)
+	if !ok {
+		return objptr{}
+	}
+	return x
+}
+
 // Key returns the value associated with the given name key in the dictionary v.
 // Like the result of the Name method, the key should not include a leading slash.
 // If v is a stream, Key applies to the stream's header dictionary.
@@ -701,12 +714,13 @@ func (v Value) Key(key string) Value {
 // KeyRaw returns the raw values associated with the given name key in the dictionary v.
 // Like the result of the Name method, the key should not include a leading slash.
 // If v.Kind() != Dict, KeyRaw returns nil
-func (v Value) KeyRaw(key string) object {
+func (v Value) KeyRaw(key string) Value {
 	x, ok := v.data.(dict)
 	if !ok {
-		return nil
+		return Value{}
 	}
-	return x[name(key)]
+
+	return Value{r: v.r, ptr: v.ptr, data: x[name(key)]}
 }
 
 // Keys returns a sorted list of the keys in the dictionary v.

@@ -21,7 +21,6 @@ import (
 //	string, a PDF string literal
 //	keyword, a PDF keyword
 //	name, a PDF name without the leading slash
-//
 type token interface{}
 
 // A name is a PDF name, without the leading slash.
@@ -414,6 +413,10 @@ type stream struct {
 type objptr struct {
 	id  uint32
 	gen uint16
+}
+
+func (obj objptr) IsNull() bool {
+	return obj.id == 0 && obj.gen == 0
 }
 
 type objdef struct {
