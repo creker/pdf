@@ -45,4 +45,3 @@ func TestReadPdf(t *testing.T) {
 	}
 	fmt.Println(buf.String())
 }
-

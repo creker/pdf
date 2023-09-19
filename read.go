@@ -4,7 +4,7 @@
 
 // Package pdf implements reading of PDF files.
 //
-// Overview
+// # Overview
 //
 // PDF is Adobe's Portable Document Format, ubiquitous on the internet.
 // A PDF document is a complex data format built on a fairly simple structure.
@@ -43,7 +43,6 @@
 // they are implemented only in terms of the Value API and could be moved outside
 // the package. Equally important, traversal of other PDF data structures can be implemented
 // in other packages as needed.
-//
 package pdf
 
 // BUG(rsc): The package is incomplete, although it has been used successfully on some
@@ -195,6 +194,19 @@ func (r *Reader) Trailer() Value {
 	}
 
 	return Value{r, r.trailerptr, r.trailer}
+}
+
+// ObjectOffset returns object offset from the start of the file
+func (r *Reader) ObjectOffset(ptr objptr) int64 {
+	if ptr.id >= uint32(len(r.xref)) {
+		return -1
+	}
+	xref := r.xref[ptr.id]
+	if xref.ptr != ptr || xref.inStream || xref.offset == 0 {
+		return -1
+	}
+
+	return xref.offset
 }
 
 func readXref(r *Reader, b *buffer) ([]xref, objptr, dict, error) {
@@ -622,7 +634,7 @@ func (v Value) RawString() string {
 	return x
 }
 
-// Text returns v's string value interpreted as a ``text string'' (defined in the PDF spec)
+// Text returns v's string value interpreted as a “text string” (defined in the PDF spec)
 // and converted to UTF-8.
 // If v.Kind() != String, Text returns the empty string.
 func (v Value) Text() string {
@@ -684,6 +696,17 @@ func (v Value) Key(key string) Value {
 		x = strm.hdr
 	}
 	return v.r.resolve(v.ptr, x[name(key)])
+}
+
+// KeyRaw returns the raw values associated with the given name key in the dictionary v.
+// Like the result of the Name method, the key should not include a leading slash.
+// If v.Kind() != Dict, KeyRaw returns nil
+func (v Value) KeyRaw(key string) object {
+	x, ok := v.data.(dict)
+	if !ok {
+		return nil
+	}
+	return x[name(key)]
 }
 
 // Keys returns a sorted list of the keys in the dictionary v.
@@ -819,7 +842,7 @@ func (e *errorReadCloser) Close() error {
 
 // Reader returns the data contained in the stream v.
 // If v.Kind() != Stream, Reader returns a ReadCloser that
-// responds to all reads with a ``stream not present'' error.
+// responds to all reads with a “stream not present” error.
 func (v Value) Reader() io.ReadCloser {
 	x, ok := v.data.(stream)
 	if !ok {
